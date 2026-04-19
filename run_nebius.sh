@@ -4,8 +4,8 @@
 # =============================================================================
 #
 # Prerequisites:
-#   1. Run setup_nebius.sh first (already done - S3 credentials configured)
-#   2. Code uploaded to S3: s3://causalflow-experiments/code/causalflow.tar.gz
+#   - Code pushed to GitHub: https://github.com/gabrycina/causalflow
+#   - AWS credentials configured (for saving outputs to S3)
 #
 # =============================================================================
 
@@ -16,8 +16,9 @@ PROJECT_ID="project-e00h8qe9pp3twpwbzf"
 SUBNET_ID="vpcsubnet-e00w88z4k3eq6s6wk5"
 BUCKET_NAME="causalflow-experiments"
 REGION="eu-north1"
+GITHUB_REPO="https://github.com/gabrycina/causalflow.git"
 IMAGE="pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime"
-PLATFORM="gpu-a100-sxm"
+PLATFORM="gpu-h100-sxm"
 PRESET="1gpu-16vcpu-200gb"
 DISK_SIZE="450Gi"
 MAX_TIME="48h"
@@ -32,7 +33,7 @@ MAX_GENES=${MAX_GENES:-2000}
 GRN_STRATEGY=${GRN_STRATEGY:-message_passing}
 
 # Container paths
-CONTAINER_CODE_DIR="/workspace/code"
+CONTAINER_CODE_DIR="/workspace/causalflow"
 CONTAINER_DATA_DIR="/workspace/data"
 CONTAINER_OUTPUT_DIR="/workspace/output"
 
@@ -41,8 +42,8 @@ JOB_NAME="causalflow-$(date +%Y%m%d-%H%M%S)"
 echo "========================================="
 echo "CausalFlow Training Job: $JOB_NAME"
 echo "========================================="
-echo "Image: $IMAGE"
-echo "Platform: $PLATFORM / $PRESET}"
+echo "GitHub: $GITHUB_REPO"
+echo "Platform: $PLATFORM / $PRESET"
 echo "Max time: $MAX_TIME"
 echo ""
 echo "Training config:"
@@ -50,14 +51,11 @@ echo "  Epochs: $EPOCHS, Batch: $BATCH_SIZE, LR: $LR"
 echo "  D_model: $D_MODEL, MP layers: $NUM_MP_LAYERS"
 echo "========================================="
 
-# Training command
+# Training command - clone from GitHub
 TRAIN_CMD="bash -c \"
 set -e
-echo 'Extracting code from S3...'
-aws s3 cp s3://$BUCKET_NAME/code/causalflow.tar.gz /tmp/causalflow.tar.gz \
-  --profile nebius --endpoint-url https://storage.$REGION.nebius.cloud
-mkdir -p $CONTAINER_CODE_DIR
-tar -xzf /tmp/causalflow.tar.gz -C $CONTAINER_CODE_DIR
+echo 'Cloning code from GitHub...'
+git clone $GITHUB_REPO $CONTAINER_CODE_DIR
 cd $CONTAINER_CODE_DIR
 
 echo 'Installing dependencies...'
