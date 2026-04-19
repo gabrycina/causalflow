@@ -10,14 +10,9 @@ pip install --quiet "numpy<2" --force-reinstall
 pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas scikit-misc
 pip install --quiet decoupler
 
-echo 'Setting up data...'
+echo 'Downloading Norman 2019 dataset from Zenodo...'
 mkdir -p /workspace/data
-if [ ! -f /workspace/data/NormanWeissman2019_filtered.h5ad ]; then
-  echo 'Downloading Norman 2019 dataset from Zenodo...'
-  curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
-else
-  echo 'Data file already exists, skipping download'
-fi
+curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
 
 echo 'Logging into wandb...'
 wandb login $WANDB_API_KEY
