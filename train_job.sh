@@ -1,11 +1,8 @@
 #!/bin/bash
 set -e
 
-echo 'Installing git...'
-apt-get update && apt-get install -y git
-
-echo 'Cloning code from GitHub...'
-git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow
+# We assume the repo has already been cloned by the parent script
+# Just cd into it and run
 cd /workspace/causalflow
 
 echo 'Installing dependencies...'
