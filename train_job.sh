@@ -6,7 +6,7 @@ set -e
 cd /workspace/causalflow
 
 echo 'Installing dependencies...'
-pip install --quiet "numpy<2"
+pip install --quiet "numpy<2" --force-reinstall
 pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas scikit-misc
 pip install --quiet decoupler
 
