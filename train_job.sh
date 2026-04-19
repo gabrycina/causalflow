@@ -6,9 +6,9 @@ set -e
 cd /workspace/causalflow
 
 echo 'Installing dependencies...'
-pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
-pip install --quiet decoupler
 pip install --quiet "numpy<2"
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas scikit-misc
+pip install --quiet decoupler
 
 echo 'Downloading Norman 2019 dataset from Zenodo...'
 mkdir -p /workspace/data
