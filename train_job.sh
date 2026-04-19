@@ -1,42 +1,43 @@
 #!/bin/bash
 set -e
 
-# Test locally - don't need to clone since we're already in the repo
+echo 'Installing git...'
+apt-get update && apt-get install -y git
 
-# Set environment variables for local testing
-export WANDB_API_KEY=${WANDB_API_KEY:-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}
-export EPOCHS=${EPOCHS:-30}
-export BATCH_SIZE=${BATCH_SIZE:-128}
-export LR=${LR:-1e-4}
-export D_MODEL=${D_MODEL:-256}
-export NUM_MP_LAYERS=${NUM_MP_LAYERS:-4}
-export MAX_GENES=${MAX_GENES:-2000}
-export GRN_STRATEGY=${GRN_STRATEGY:-message_passing}
-export JOB_NAME=${JOB_NAME:-causalflow-local-test-$(date +%Y%m%d-%H%M%S)}
+echo 'Cloning code from GitHub...'
+git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow
+cd /workspace/causalflow
 
-# Use local data directory
-DATA_DIR="/tmp"
-OUTPUT_DIR="/tmp/causalflow_output"
-mkdir -p $OUTPUT_DIR
+echo 'Installing dependencies...'
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet decoupler
+pip install --quiet "numpy<2"
 
-# Don't need to download - we have the file locally
-echo "Using local Norman dataset..."
+echo 'Downloading Norman 2019 dataset from Zenodo...'
+mkdir -p /workspace/data
+curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
 
-echo 'Starting training locally...'
+echo 'Logging into wandb...'
+wandb login $WANDB_API_KEY
+
+echo 'Starting training...'
 python train.py \
-  --data-dir $DATA_DIR \
-  --output-dir $OUTPUT_DIR \
-  --max-genes $MAX_GENES \
-  --epochs $EPOCHS \
-  --batch-size $BATCH_SIZE \
-  --lr $LR \
-  --d-model $D_MODEL \
-  --num-layers $NUM_MP_LAYERS \
-  --grn-strategy $GRN_STRATEGY \
+  --data-dir /workspace/data \
+  --output-dir /workspace/output \
+  --max-genes ${MAX_GENES:-2000} \
+  --epochs ${EPOCHS:-30} \
+  --batch-size ${BATCH_SIZE:-128} \
+  --lr ${LR:-1e-4} \
+  --d-model ${D_MODEL:-256} \
+  --num-layers ${NUM_MP_LAYERS:-4} \
+  --grn-strategy ${GRN_STRATEGY:-message_passing} \
   --grn-reg \
   --wandb \
   --wandb-project causalflow \
-  --run-name $JOB_NAME \
+  --run-name ${JOB_NAME:-causalflow-$(date +%Y%m%d-%H%M%S)} \
   --save-interval 5
 
+echo 'Copying outputs to S3...'
+aws s3 cp /workspace/output s3://causalflow-experiments/output/${JOB_NAME}/ \
+  --profile nebius --endpoint-url https://storage.eu-north1.nebius.cloud --recursive
 echo 'Done!'
