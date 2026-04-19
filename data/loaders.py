@@ -48,9 +48,18 @@ def load_norman_dataset(
     import anndata as ad
     import scanpy as sc
 
-    # Check for local file first
-    local_path = os.path.join(data_dir, "norman_2019.h5ad")
-    if os.path.exists(local_path):
+    # Check for local file first - try both naming conventions
+    local_paths = [
+        os.path.join(data_dir, "NormanWeissman2019_filtered.h5ad"),
+        os.path.join(data_dir, "norman_2019.h5ad"),
+    ]
+    local_path = None
+    for p in local_paths:
+        if os.path.exists(p):
+            local_path = p
+            break
+
+    if local_path:
         print(f"Loading Norman dataset from {local_path}")
         adata = ad.read_h5ad(local_path)
     else:
@@ -88,7 +97,9 @@ def load_norman_dataset(
 
     # Ensure perturbation_name and gemgroup columns exist
     if "perturbation_name" not in adata.obs.columns:
-        if "guide" in adata.obs.columns:
+        if "perturbation" in adata.obs.columns:
+            adata.obs["perturbation_name"] = adata.obs["perturbation"]
+        elif "guide" in adata.obs.columns:
             adata.obs["perturbation_name"] = adata.obs["guide"]
         else:
             adata.obs["perturbation_name"] = "unknown"

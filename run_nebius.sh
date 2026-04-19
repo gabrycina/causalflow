@@ -68,8 +68,11 @@ cd $CONTAINER_CODE_DIR
 echo 'Installing dependencies...'
 pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
 pip install --quiet decoupler
-pip install --quiet pertpy
 pip install --quiet 'numpy<2'
+
+echo 'Downloading Norman 2019 dataset from Zenodo...'
+mkdir -p $CONTAINER_DATA_DIR
+curl -L -o $CONTAINER_DATA_DIR/NormanWeissman2019_filtered.h5ad 'https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad'
 
 echo 'Logging into wandb...'
 wandb login \$WANDB_API_KEY
