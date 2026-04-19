@@ -71,6 +71,9 @@ pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyya
 pip install --quiet decoupler
 pip install --quiet pertpy
 
+echo 'Logging into wandb...'
+wandb login \$WANDB_API_KEY
+
 echo 'Starting training...'
 python train.py \
   --data-dir $CONTAINER_DATA_DIR \
@@ -83,6 +86,8 @@ python train.py \
   --num-layers $NUM_MP_LAYERS \
   --grn-strategy $GRN_STRATEGY \
   --grn-reg \
+  --wandb \
+  --wandb-project causalflow \
   --run-name $JOB_NAME \
   --save-interval 5
 
@@ -101,6 +106,7 @@ JOB_RESULT=$(nebius ai job create \
   --disk-size "$DISK_SIZE" \
   --volume "$BUCKET_ID:$CONTAINER_DATA_DIR" \
   --volume "$BUCKET_ID:$CONTAINER_OUTPUT_DIR" \
+  --env "WANDB_API_KEY=$WANDB_API_KEY" \
   --container-command bash \
   --args "-c '$TRAIN_CMD'" \
   --working-dir "$CONTAINER_CODE_DIR" \

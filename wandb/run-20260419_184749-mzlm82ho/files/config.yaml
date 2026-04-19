@@ -1,0 +1,109 @@
+_wandb:
+    value:
+        cli_version: 0.26.0
+        e:
+            cc9w1qts3c2wl9alf32hm3aiphekcu0h:
+                apple:
+                    ecpuCores: 4
+                    gpuCores: 30
+                    macModel: Mac15,10
+                    memoryGb: 36
+                    name: Apple M3 Max
+                    pcpuCores: 10
+                    ramTotalBytes: "38654705664"
+                args:
+                    - --data-dir
+                    - /tmp/data
+                    - --output-dir
+                    - /tmp/output
+                    - --max-genes
+                    - "200"
+                    - --epochs
+                    - "1"
+                    - --batch-size
+                    - "32"
+                    - --d-model
+                    - "128"
+                    - --num-layers
+                    - "2"
+                    - --grn-strategy
+                    - message_passing
+                    - --grn-reg
+                    - --wandb
+                    - --wandb-project
+                    - causalflow
+                    - --run-name
+                    - test-local
+                codePath: train.py
+                codePathLocal: train.py
+                cpu_count: 14
+                cpu_count_logical: 14
+                disk:
+                    /:
+                        total: "994662584320"
+                        used: "702203383808"
+                email: c.gabriele.info@gmail.com
+                executable: /Users/gabrycina/Documents/dev/causalflow/.venv/bin/python
+                git:
+                    commit: de15d9559ada1be94dc944e752f82d1237fc3d7c
+                    remote: https://github.com/gabrycina/causalflow.git
+                host: Mac
+                memory:
+                    total: "38654705664"
+                os: macOS-26.3-arm64-arm-64bit-Mach-O
+                program: /Users/gabrycina/Documents/dev/causalflow/train.py
+                python: CPython 3.13.5
+                root: /Users/gabrycina/Documents/dev/causalflow
+                startedAt: "2026-04-19T17:47:49.619667Z"
+                writerId: cc9w1qts3c2wl9alf32hm3aiphekcu0h
+        m: []
+        python_version: 3.13.5
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+                - 5
+                - 53
+                - 106
+            "3":
+                - 13
+                - 16
+            "4": 3.13.5
+            "5": 0.26.0
+            "12": 0.26.0
+            "13": darwin-arm64
+batch_size:
+    value: 32
+d_model:
+    value: 128
+data_dir:
+    value: /tmp/data
+epochs:
+    value: 1
+grn_reg:
+    value: true
+grn_strategy:
+    value: message_passing
+log_interval:
+    value: 50
+lr:
+    value: 0.0001
+max_genes:
+    value: 200
+num_layers:
+    value: 2
+output_dir:
+    value: /tmp/output
+run_name:
+    value: test-local
+save_interval:
+    value: 10
+sigma:
+    value: 0.1
+wandb:
+    value: true
+wandb_project:
+    value: causalflow
+weight_decay:
+    value: 0.01
