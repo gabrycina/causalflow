@@ -193,7 +193,8 @@ def identify_control_pattern(adata) -> pd.Series:
 
     if "perturbation_name" in obs.columns:
         # Norman dataset: control = non-targeting or empty perturbation
-        pert = obs["perturbation_name"].fillna("unknown")
+        # Convert to object type first to avoid Categorical fillna issues
+        pert = obs["perturbation_name"].astype(object).fillna("unknown")
         is_control = pert.str.contains(
             "NON-TARGET|NT|Control|control|non-target|NONTCELL",
             case=False,
@@ -286,7 +287,7 @@ class PairedPerturbationDataset(Dataset):
         """
         pairs = []
 
-        perts = obs[self.perturbation_col].fillna("unknown")
+        perts = obs[self.perturbation_col].astype(object).fillna("unknown")
         gems = obs[self.gemgroup_col] if self.gemgroup_col in obs.columns else pd.Series(0, index=obs.index)
 
         # Group cells by (gemgroup, perturbation)

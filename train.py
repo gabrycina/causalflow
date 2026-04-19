@@ -323,7 +323,7 @@ def main(args):
 
     # Load dataset
     print("Loading Norman dataset...")
-    adata = load_norman_dataset(max_genes=args.max_genes)
+    adata = load_norman_dataset(data_dir=args.data_dir, max_genes=args.max_genes)
 
     # Get gene names
     gene_names = adata.var_names.tolist()[:args.max_genes]
