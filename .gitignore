@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# AWS credentials
+.aws/
+credentials
+
+# Secrets / keys
+*.pem
+*.key
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Model checkpoints
+*.pt
+*.pth
+*.ckpt
+
+# Data files (too large for git)
+*.h5ad
+*.h5
+*.loom
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks (optional - uncomment if wanted)
+#.ipynb_checkpoints/
