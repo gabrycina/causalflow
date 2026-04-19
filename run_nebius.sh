@@ -52,8 +52,67 @@ echo "  Epochs: $EPOCHS, Batch: $BATCH_SIZE, LR: $LR"
 echo "  D_model: $D_MODEL, MP layers: $NUM_MP_LAYERS"
 echo "========================================="
 
-# Launch job using a simple bash -c with the script inline
-# Use @ instead of $ for variable substitution in the train script to avoid outer shell expansion
+# Write train script to a temporary file (using current directory, will be removed after git clone)
+cat > /tmp/run_train.sh << 'TRAINEOF'
+#!/bin/bash
+set -e
+
+echo 'Installing git...'
+apt-get update && apt-get install -y git
+
+echo 'Cloning code from GitHub...'
+git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow
+cd /workspace/causalflow
+
+echo 'Installing dependencies...'
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet decoupler
+pip install --quiet "numpy<2"
+
+echo 'Downloading Norman 2019 dataset from Zenodo...'
+mkdir -p /workspace/data
+curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
+
+echo 'Logging into wandb...'
+wandb login $WANDB_API_KEY
+
+echo 'Starting training...'
+python train.py \
+  --data-dir /workspace/data \
+  --output-dir /workspace/output \
+  --max-genes MAX_GENES_REPLACE \
+  --epochs EPOCHS_REPLACE \
+  --batch-size BATCH_SIZE_REPLACE \
+  --lr LR_REPLACE \
+  --d-model D_MODEL_REPLACE \
+  --num-layers NUM_LAYERS_REPLACE \
+  --grn-strategy GRN_STRATEGY_REPLACE \
+  --grn-reg \
+  --wandb \
+  --wandb-project causalflow \
+  --run-name JOB_NAME_REPLACE \
+  --save-interval 5
+
+echo 'Copying outputs to S3...'
+aws s3 cp /workspace/output s3://causalflow-experiments/output/JOB_NAME_REPLACE/ \
+  --profile nebius --endpoint-url https://storage.eu-north1.nebius.cloud --recursive
+echo 'Done!'
+TRAINEOF
+
+# Replace placeholders
+sed -i "s/MAX_GENES_REPLACE/$MAX_GENES/g" /tmp/run_train.sh
+sed -i "s/EPOCHS_REPLACE/$EPOCHS/g" /tmp/run_train.sh
+sed -i "s/BATCH_SIZE_REPLACE/$BATCH_SIZE/g" /tmp/run_train.sh
+sed -i "s/LR_REPLACE/$LR/g" /tmp/run_train.sh
+sed -i "s/D_MODEL_REPLACE/$D_MODEL/g" /tmp/run_train.sh
+sed -i "s/NUM_LAYERS_REPLACE/$NUM_MP_LAYERS/g" /tmp/run_train.sh
+sed -i "s/GRN_STRATEGY_REPLACE/$GRN_STRATEGY/g" /tmp/run_train.sh
+sed -i "s/JOB_NAME_REPLACE/$JOB_NAME/g" /tmp/run_train.sh
+
+# Create base64 encoded version to pass to nebius
+TRAIN_SCRIPT_B64=$(base64 -i /tmp/run_train.sh)
+
+# Launch job - fetch and run the script
 JOB_RESULT=$(nebius ai job create \
   --name "$JOB_NAME" \
   --image "$IMAGE" \
@@ -65,34 +124,8 @@ JOB_RESULT=$(nebius ai job create \
   --env "WANDB_API_KEY=$WANDB_API_KEY" \
   --container-command bash \
   --args "-c" \
-  --args "set -e && \
-apt-get update && apt-get install -y git && \
-git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow && \
-cd /workspace/causalflow && \
-pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas && \
-pip install --quiet decoupler && \
-pip install --quiet 'numpy<2' && \
-mkdir -p /workspace/data && \
-curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad && \
-wandb login \$WANDB_API_KEY && \
-python train.py \
-  --data-dir /workspace/data \
-  --output-dir /workspace/output \
-  --max-genes $MAX_GENES \
-  --epochs $EPOCHS \
-  --batch-size $BATCH_SIZE \
-  --lr $LR \
-  --d-model $D_MODEL \
-  --num-layers $NUM_MP_LAYERS \
-  --grn-strategy $GRN_STRATEGY \
-  --grn-reg \
-  --wandb \
-  --wandb-project causalflow \
-  --run-name $JOB_NAME \
-  --save-interval 5 && \
-aws s3 cp /workspace/output s3://causalflow-experiments/output/$JOB_NAME/ \
-  --profile nebius --endpoint-url https://storage.$REGION.nebius.cloud --recursive" \
-  --working-dir "/workspace/causalflow" \
+  --args "echo '$TRAIN_SCRIPT_B64' | base64 -d > /tmp/run_train.sh && chmod +x /tmp/run_train.sh && bash /tmp/run_train.sh" \
+  --working-dir "/workspace" \
   --subnet-id "$SUBNET_ID" \
   --timeout "$MAX_TIME" \
   --restart-policy never \
