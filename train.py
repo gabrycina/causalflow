@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model.causal_flow_transformer import CausalFlowTransformer, build_model
 from model.grn_injection import GRNAttentionBias
 from utils.grn_builder import load_dorothea, build_grn_adjacency, build_causal_attention_mask
-from data.loaders import load_norman_dataset, collate_fn
+from data.loaders import load_norman_dataset, collate_paired_batch
 
 
 # ========================

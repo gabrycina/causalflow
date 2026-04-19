@@ -335,7 +335,12 @@ class PairedPerturbationDataset(Dataset):
             else:
                 e = np.array(e).flatten()
             ctrl_exprs.append(e)
-        ctrl_expr = np.mean(ctrl_exprs, axis=0)
+
+        if len(ctrl_exprs) == 0:
+            # Fallback: use the perturbed cell's expression as control (identity mapping)
+            ctrl_expr = pert_expr.copy()
+        else:
+            ctrl_expr = np.mean(ctrl_exprs, axis=0)
 
         # Select gene subset
         gene_idx = [self.gene_to_idx[g] for g in self.gene_names]

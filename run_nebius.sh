@@ -66,8 +66,8 @@ git clone $GITHUB_REPO $CONTAINER_CODE_DIR
 cd $CONTAINER_CODE_DIR
 
 echo 'Installing dependencies...'
-pip install --quiet torch --index-url https://download.pytorch.org/whl/cu121
-pip install --quiet 'numpy<2' scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet 'numpy<2'
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
 pip install --quiet decoupler
 pip install --quiet pertpy
 
