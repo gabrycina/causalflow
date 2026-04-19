@@ -83,8 +83,6 @@ python train.py \
   --num-layers $NUM_MP_LAYERS \
   --grn-strategy $GRN_STRATEGY \
   --grn-reg \
-  --wandb \
-  --wandb-project causalflow \
   --run-name $JOB_NAME \
   --save-interval 5
 
