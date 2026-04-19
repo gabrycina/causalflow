@@ -15,7 +15,7 @@ mkdir -p /workspace/data
 curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
 
 echo 'Logging into wandb...'
-wandb login $WANDB_API_KEY
+wandb login --nocreate $WANDB_API_KEY
 
 echo 'Starting training...'
 python train.py \
