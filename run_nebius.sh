@@ -11,10 +11,14 @@
 
 set -e
 
+# Add nebius to PATH
+export PATH="$HOME/.nebius/bin:$PATH"
+
 # ---- Configuration ----
 PROJECT_ID="project-e00h8qe9pp3twpwbzf"
 SUBNET_ID="vpcsubnet-e00w88z4k3eq6s6wk5"
 BUCKET_NAME="causalflow-experiments"
+BUCKET_ID="storagebucket-e009709783125504239130"
 REGION="eu-north1"
 GITHUB_REPO="https://github.com/gabrycina/causalflow.git"
 IMAGE="pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime"
@@ -54,13 +58,17 @@ echo "========================================="
 # Training command - clone from GitHub
 TRAIN_CMD="bash -c \"
 set -e
+echo 'Installing git...'
+apt-get update && apt-get install -y git
+
 echo 'Cloning code from GitHub...'
 git clone $GITHUB_REPO $CONTAINER_CODE_DIR
 cd $CONTAINER_CODE_DIR
 
 echo 'Installing dependencies...'
 pip install --quiet torch --index-url https://download.pytorch.org/whl/cu121
-pip install --quiet decoupler numpy scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet 'numpy<2' scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet decoupler
 pip install --quiet pertpy
 
 echo 'Starting training...'
@@ -93,8 +101,8 @@ JOB_RESULT=$(nebius ai job create \
   --platform "$PLATFORM" \
   --preset "$PRESET" \
   --disk-size "$DISK_SIZE" \
-  --volume "nebius-storage://$BUCKET_NAME:$CONTAINER_DATA_DIR" \
-  --volume "nebius-storage://$BUCKET_NAME:$CONTAINER_OUTPUT_DIR" \
+  --volume "$BUCKET_ID:$CONTAINER_DATA_DIR" \
+  --volume "$BUCKET_ID:$CONTAINER_OUTPUT_DIR" \
   --container-command bash \
   --args "-c '$TRAIN_CMD'" \
   --working-dir "$CONTAINER_CODE_DIR" \
