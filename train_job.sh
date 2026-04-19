@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+echo 'Installing git...'
+apt-get update && apt-get install -y git
+
+echo 'Cloning code from GitHub...'
+git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow
+cd /workspace/causalflow
+
+echo 'Installing dependencies...'
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
+pip install --quiet decoupler
+pip install --quiet "numpy<2"
+
+echo 'Downloading Norman 2019 dataset from Zenodo...'
+mkdir -p /workspace/data
+curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad
+
+echo 'Logging into wandb...'
+wandb login $WANDB_API_KEY
+
+echo 'Starting training...'
+python train.py \
+  --data-dir /workspace/data \
+  --output-dir /workspace/output \
+  --max-genes 2000 \
+  --epochs 30 \
+  --batch-size 128 \
+  --lr 1e-4 \
+  --d-model 256 \
+  --num-layers 4 \
+  --grn-strategy message_passing \
+  --grn-reg \
+  --wandb \
+  --wandb-project causalflow \
+  --run-name causalflow-$(date +%Y%m%d-%H%M%S) \
+  --save-interval 5
+
+echo 'Copying outputs to S3...'
+aws s3 cp /workspace/output s3://causalflow-experiments/output/$(date +%Y%m%d-%H%M%S)/ \
+  --profile nebius --endpoint-url https://storage.eu-north1.nebius.cloud --recursive
+echo 'Done!'

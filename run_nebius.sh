@@ -20,7 +20,6 @@ SUBNET_ID="vpcsubnet-e00w88z4k3eq6s6wk5"
 BUCKET_NAME="causalflow-experiments"
 BUCKET_ID="storagebucket-e009709783125504239130"
 REGION="eu-north1"
-GITHUB_REPO="https://github.com/gabrycina/causalflow.git"
 IMAGE="pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime"
 PLATFORM="gpu-h100-sxm"
 PRESET="1gpu-16vcpu-200gb"
@@ -37,7 +36,6 @@ MAX_GENES=${MAX_GENES:-2000}
 GRN_STRATEGY=${GRN_STRATEGY:-message_passing}
 
 # Container paths
-CONTAINER_CODE_DIR="/workspace/causalflow"
 CONTAINER_DATA_DIR="/workspace/data"
 CONTAINER_OUTPUT_DIR="/workspace/output"
 
@@ -46,7 +44,6 @@ JOB_NAME="causalflow-$(date +%Y%m%d-%H%M%S)"
 echo "========================================="
 echo "CausalFlow Training Job: $JOB_NAME"
 echo "========================================="
-echo "GitHub: $GITHUB_REPO"
 echo "Platform: $PLATFORM / $PRESET"
 echo "Max time: $MAX_TIME"
 echo ""
@@ -55,32 +52,32 @@ echo "  Epochs: $EPOCHS, Batch: $BATCH_SIZE, LR: $LR"
 echo "  D_model: $D_MODEL, MP layers: $NUM_MP_LAYERS"
 echo "========================================="
 
-# Training command - clone from GitHub
-TRAIN_CMD="bash -c \"
-set -e
-echo 'Installing git...'
-apt-get update && apt-get install -y git
-
-echo 'Cloning code from GitHub...'
-git clone $GITHUB_REPO $CONTAINER_CODE_DIR
-cd $CONTAINER_CODE_DIR
-
-echo 'Installing dependencies...'
-pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
-pip install --quiet decoupler
-pip install --quiet 'numpy<2'
-
-echo 'Downloading Norman 2019 dataset from Zenodo...'
-mkdir -p $CONTAINER_DATA_DIR
-curl -L -o $CONTAINER_DATA_DIR/NormanWeissman2019_filtered.h5ad 'https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad'
-
-echo 'Logging into wandb...'
-wandb login \$WANDB_API_KEY
-
-echo 'Starting training...'
+# Launch job using a simple bash -c with the script inline
+# Use @ instead of $ for variable substitution in the train script to avoid outer shell expansion
+JOB_RESULT=$(nebius ai job create \
+  --name "$JOB_NAME" \
+  --image "$IMAGE" \
+  --platform "$PLATFORM" \
+  --preset "$PRESET" \
+  --disk-size "$DISK_SIZE" \
+  --volume "$BUCKET_ID:$CONTAINER_DATA_DIR" \
+  --volume "$BUCKET_ID:$CONTAINER_OUTPUT_DIR" \
+  --env "WANDB_API_KEY=$WANDB_API_KEY" \
+  --container-command bash \
+  --args "-c" \
+  --args "set -e && \
+apt-get update && apt-get install -y git && \
+git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow && \
+cd /workspace/causalflow && \
+pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas && \
+pip install --quiet decoupler && \
+pip install --quiet 'numpy<2' && \
+mkdir -p /workspace/data && \
+curl -L -o /workspace/data/NormanWeissman2019_filtered.h5ad https://zenodo.org/records/10044268/files/NormanWeissman2019_filtered.h5ad && \
+wandb login \$WANDB_API_KEY && \
 python train.py \
-  --data-dir $CONTAINER_DATA_DIR \
-  --output-dir $CONTAINER_OUTPUT_DIR \
+  --data-dir /workspace/data \
+  --output-dir /workspace/output \
   --max-genes $MAX_GENES \
   --epochs $EPOCHS \
   --batch-size $BATCH_SIZE \
@@ -92,27 +89,10 @@ python train.py \
   --wandb \
   --wandb-project causalflow \
   --run-name $JOB_NAME \
-  --save-interval 5
-
-echo 'Copying outputs to S3...'
-aws s3 cp $CONTAINER_OUTPUT_DIR s3://$BUCKET_NAME/output/$JOB_NAME/ \
-  --profile nebius --endpoint-url https://storage.$REGION.nebius.cloud --recursive
-echo 'Done!'
-\""
-
-# Launch job
-JOB_RESULT=$(nebius ai job create \
-  --name "$JOB_NAME" \
-  --image "$IMAGE" \
-  --platform "$PLATFORM" \
-  --preset "$PRESET" \
-  --disk-size "$DISK_SIZE" \
-  --volume "$BUCKET_ID:$CONTAINER_DATA_DIR" \
-  --volume "$BUCKET_ID:$CONTAINER_OUTPUT_DIR" \
-  --env "WANDB_API_KEY=$WANDB_API_KEY" \
-  --container-command bash \
-  --args "-c '$TRAIN_CMD'" \
-  --working-dir "$CONTAINER_CODE_DIR" \
+  --save-interval 5 && \
+aws s3 cp /workspace/output s3://causalflow-experiments/output/$JOB_NAME/ \
+  --profile nebius --endpoint-url https://storage.$REGION.nebius.cloud --recursive" \
+  --working-dir "/workspace/causalflow" \
   --subnet-id "$SUBNET_ID" \
   --timeout "$MAX_TIME" \
   --restart-policy never \
