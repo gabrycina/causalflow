@@ -14,6 +14,18 @@ set -e
 # Add nebius to PATH
 export PATH="$HOME/.nebius/bin:$PATH"
 
+# ---- Fix WANDB_API_KEY if not set ----
+if [ -z "$WANDB_API_KEY" ]; then
+    echo "WANDB_API_KEY not set, reading from ~/.netrc..."
+    WANDB_API_KEY=$(grep -A2 "machine api.wandb.ai" ~/.netrc 2>/dev/null | grep "password" | awk '{print $2}')
+    if [ -z "$WANDB_API_KEY" ]; then
+        echo "ERROR: Could not find WANDB_API_KEY in ~/.netrc"
+        echo "Please run 'wandb login' or set WANDB_API_KEY environment variable"
+        exit 1
+    fi
+    export WANDB_API_KEY
+fi
+
 # ---- Configuration ----
 PROJECT_ID="project-e00h8qe9pp3twpwbzf"
 SUBNET_ID="vpcsubnet-e00w88z4k3eq6s6wk5"
