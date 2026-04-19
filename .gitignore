@@ -38,3 +38,4 @@ Thumbs.db
 
 # Jupyter notebooks (optional - uncomment if wanted)
 #.ipynb_checkpoints/
+wandb/
