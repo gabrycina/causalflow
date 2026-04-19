@@ -72,7 +72,7 @@ JOB_RESULT=$(nebius ai job create \
   --env "GRN_STRATEGY=$GRN_STRATEGY" \
   --env "JOB_NAME=$JOB_NAME" \
   --container-command bash \
-  --args "-c 'apt-get update && apt-get install -y git && rm -rf /workspace/causalflow && git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow && cd /workspace/causalflow && chmod +x train_job.sh && bash train_job.sh'" \
+  --args "-c 'apt-get update && apt-get install -y git curl && rm -rf /workspace/causalflow && git clone https://github.com/gabrycina/causalflow.git /workspace/causalflow && cd /workspace/causalflow && chmod +x train_job.sh && bash train_job.sh'" \
   --working-dir "/workspace" \
   --subnet-id "$SUBNET_ID" \
   --timeout "$MAX_TIME" \
