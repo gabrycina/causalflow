@@ -66,10 +66,10 @@ git clone $GITHUB_REPO $CONTAINER_CODE_DIR
 cd $CONTAINER_CODE_DIR
 
 echo 'Installing dependencies...'
-pip install --quiet 'numpy<2'
 pip install --quiet scipy scikit-learn anndata scanpy scvi-tools wandb tqdm pyyaml pandas
 pip install --quiet decoupler
 pip install --quiet pertpy
+pip install --quiet 'numpy<2'
 
 echo 'Logging into wandb...'
 wandb login \$WANDB_API_KEY
